@@ -154,6 +154,37 @@
   .import-hint { font-size: 11px; color: #bbb; margin-top: 6px; }
   .import-preview-item { font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--cream-darker); color: var(--deep); }
   .import-preview-item span { color: #aaa; }
+
+  /* ── Voting ── */
+  .vote-section { margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--cream-darker); }
+  .vote-counts { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .vote-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 30px; border: 1.5px solid var(--cream-darker); background: transparent; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; color: #888; }
+  .vote-btn:hover { border-color: var(--deep); color: var(--deep); }
+  .vote-btn.voted-up { background: #e6f4ea; border-color: #34a853; color: #1a7a35; }
+  .vote-btn.voted-down { background: #fce8e6; border-color: var(--red); color: var(--red-dark); }
+  .vote-btn svg { width: 15px; height: 15px; }
+  .vote-comment-wrap { display: flex; gap: 8px; margin-top: 8px; }
+  .vote-comment-input { flex: 1; padding: 8px 12px; border-radius: var(--radius); border: 1.5px solid var(--cream-darker); background: #fff; font-family: var(--font-body); font-size: 13px; color: var(--deep); outline: none; transition: border-color 0.15s; }
+  .vote-comment-input:focus { border-color: var(--deep); }
+  .vote-comment-input::placeholder { color: #bbb; }
+  .vote-submit { padding: 8px 14px; border-radius: var(--radius); border: none; background: var(--deep); color: var(--cream); font-family: var(--font-body); font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .vote-submit:hover { background: var(--deep-light); }
+  .vote-comments-list { margin-top: 10px; }
+  .vote-comment-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--cream-darker); font-size: 12px; color: #666; }
+  .vote-comment-item:last-child { border-bottom: none; }
+  .vote-comment-icon { flex-shrink: 0; margin-top: 1px; }
+  .vote-comment-icon.up { color: #34a853; }
+  .vote-comment-icon.down { color: var(--red); }
+  .vote-loading { font-size: 12px; color: #bbb; font-style: italic; }
+  .vote-preview { margin-top: 8px; display: flex; gap: 10px; align-items: center; }
+  .vote-preview-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #888; }
+  .vote-preview-pill.has-up { color: #1a7a35; }
+  .vote-preview-pill.has-down { color: #a32d2d; }
+  .vote-name-wrap { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  .vote-name-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #aaa; white-space: nowrap; }
+  .vote-name-input { flex: 1; padding: 8px 12px; border-radius: var(--radius); border: 1.5px solid var(--cream-darker); background: #fff; font-family: var(--font-body); font-size: 13px; color: var(--deep); outline: none; transition: border-color 0.15s; }
+  .vote-name-input:focus { border-color: var(--deep); }
+  .vote-comment-reviewer { font-size: 11px; font-weight: 600; color: var(--deep); margin-right: 4px; }
 </style>
 
 
@@ -338,11 +369,11 @@ function expandCard(id) {
   const card = document.getElementById('card-' + id);
   if (!card) return;
   const isExpanded = card.classList.contains('expanded');
-  // Collapse all cards first
   document.querySelectorAll('.vendor-card.expanded').forEach(c => c.classList.remove('expanded'));
   if (!isExpanded) {
     card.classList.add('expanded');
-
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => loadVotes(id), 100);
   }
 }
 
@@ -353,6 +384,148 @@ function goHome() {
   document.getElementById('vendorGrid').innerHTML = '';
   document.getElementById('gotoSelect').value = '';
   activeTab = 'all';
+}
+
+
+const SUPA_URL = 'https://zuwirhyhuxwfgnmepfdh.supabase.co';
+const SUPA_KEY = 'sb_publishable_pkDaSD5xZK1ym_vGQe6iLw_YMGevR7d';
+
+async function supaFetch(path, options = {}) {
+  const { headers: extraHeaders = {}, ...rest } = options;
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    ...rest,
+    cache: 'no-store',
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      ...extraHeaders
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    console.warn('Supabase error:', res.status, err);
+    return null;
+  }
+  const text = await res.text();
+  try { return text ? JSON.parse(text) : null; } catch { return null; }
+}
+
+async function loadVotes(vendorId) {
+  const countEl = document.getElementById('votes-' + vendorId);
+  const commentsEl = document.getElementById('comments-' + vendorId);
+  const previewEl = document.getElementById('vpreview-' + vendorId);
+  if (!countEl && !previewEl) return;
+
+  // Get vote counts
+  const counts = await supaFetch('vendor_vote_counts?vendor_id=eq.' + encodeURIComponent(vendorId) + '&select=up_count,down_count');
+  const up = counts && counts[0] ? counts[0].up_count : 0;
+  const down = counts && counts[0] ? counts[0].down_count : 0;
+
+  if (countEl) countEl.innerHTML = `
+    <span class="vote-btn voted-up">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+      ${up}
+    </span>
+    <span class="vote-btn voted-down">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>
+      ${down}
+    </span>
+    <span style="font-size:11px;color:#bbb;">${up + down} rating${up + down !== 1 ? 's' : ''}</span>
+  `;
+
+  // Also update the collapsed card preview
+  if (previewEl) {
+    if (up === 0 && down === 0) {
+      previewEl.innerHTML = '<span style="font-size:11px;color:#bbb;font-style:italic;">No ratings yet</span>';
+    } else {
+      previewEl.innerHTML =
+        (up > 0 ? `<span class="vote-preview-pill has-up">👍 ${up}</span>` : '') +
+        (down > 0 ? `<span class="vote-preview-pill has-down">👎 ${down}</span>` : '');
+    }
+  }
+
+  // Get all votes with names (show even without comments)
+  if (commentsEl) {
+    const votes = await supaFetch('vendor_votes?vendor_id=eq.' + encodeURIComponent(vendorId) + '&order=created_at.desc&limit=10&select=vote,comment,reviewer_name,created_at');
+    if (votes && votes.length) {
+      commentsEl.innerHTML = votes.map(v => `
+        <div class="vote-comment-item">
+          <span class="vote-comment-icon ${v.vote}">${v.vote === 'up' ? '👍' : '👎'}</span>
+          <div>
+            ${v.reviewer_name ? `<span class="vote-comment-reviewer">${esc(v.reviewer_name)}</span>` : ''}
+            ${v.comment ? `<span>${esc(v.comment)}</span>` : '<span style="color:#bbb;font-style:italic;">No comment left</span>'}
+          </div>
+        </div>`).join('');
+    } else {
+      commentsEl.innerHTML = '<div style="font-size:12px;color:#bbb;padding:6px 0;font-style:italic;">No ratings yet — be the first!</div>';
+    }
+  }
+}
+
+async function submitVote(vendorId, voteType) {
+  const commentInput = document.getElementById('comment-' + vendorId);
+  const reviewerInput = document.getElementById('reviewer-' + vendorId);
+  const comment = commentInput ? commentInput.value.trim() : '';
+  const reviewerName = reviewerInput ? reviewerInput.value.trim() : '';
+
+  if (!reviewerName) {
+    if (reviewerInput) {
+      reviewerInput.style.borderColor = '#FD5247';
+      reviewerInput.placeholder = 'Please enter your name first...';
+      reviewerInput.focus();
+      setTimeout(() => {
+        reviewerInput.style.borderColor = '';
+        reviewerInput.placeholder = 'Enter your name...';
+      }, 2500);
+    }
+    return;
+  }
+
+  // Save name to localStorage so it persists
+  localStorage.setItem('ern_reviewer_name', reviewerName);
+
+  // Disable buttons while submitting
+  const card = document.getElementById('card-' + vendorId);
+  const btns = card ? card.querySelectorAll('.vote-submit') : [];
+  btns.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; });
+
+  // Insert vote record with reviewer name
+  await supaFetch('vendor_votes', {
+    method: 'POST',
+    body: JSON.stringify({
+      vendor_id: vendorId,
+      vote: voteType,
+      comment: comment || null,
+      reviewer_name: reviewerName
+    }),
+    headers: { 'Prefer': 'return=minimal' }
+  });
+
+  // Get current counts then upsert
+  const existing = await supaFetch('vendor_vote_counts?vendor_id=eq.' + encodeURIComponent(vendorId) + '&select=up_count,down_count');
+  const cur = existing && existing[0] ? existing[0] : { up_count: 0, down_count: 0 };
+  await supaFetch('vendor_vote_counts', {
+    method: 'POST',
+    body: JSON.stringify({
+      vendor_id: vendorId,
+      up_count: (cur.up_count || 0) + (voteType === 'up' ? 1 : 0),
+      down_count: (cur.down_count || 0) + (voteType === 'down' ? 1 : 0)
+    }),
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }
+  });
+
+  if (commentInput) commentInput.value = '';
+  btns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+  await loadVotes(vendorId);
+}
+
+function loadSavedName(vendorId) {
+  const saved = localStorage.getItem('ern_reviewer_name');
+  if (saved) {
+    const input = document.getElementById('reviewer-' + vendorId);
+    if (input && !input.value) input.value = saved;
+  }
 }
 
 function load() {
@@ -467,6 +640,8 @@ function renderVendors() {
   document.getElementById('sectionTitle').textContent = q ? 'Search results' : activeTab;
   document.getElementById('resultCount').textContent = `${list.length} vendor${list.length!==1?'s':''}`;
   document.getElementById('vendorHeader').style.display = 'flex';
+  // Load vote previews for all rendered cards
+  setTimeout(() => { list.forEach(v => loadVotes(v.id)); }, 100);
   const g = document.getElementById('vendorGrid');
   if (!list.length) {
     g.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>${vendors.length?'No vendors match your search.':'No vendors yet.'}</p></div>`;
@@ -485,6 +660,9 @@ function renderVendors() {
       ${v.contact&&v.contact!==v.name?`<div class="card-detail"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${esc(v.contact)}</div>`:''}
       ${v.phone?`<div class="card-detail"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>${esc(v.phone)}</div>`:''}
       ${v.email?`<div class="card-detail"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>${esc(v.email)}</div>`:''}
+      <div class="vote-preview" id="vpreview-\${esc(v.id)}">
+        <span style="font-size:11px;color:#bbb;">Loading ratings...</span>
+      </div>
       <div class="expanded-body">
         <div class="expanded-grid">
           ${v.address?`<div><div class="expanded-label">Address</div><div class="expanded-val">${esc(v.address)}</div></div>`:''}
@@ -492,6 +670,21 @@ function renderVendors() {
           ${v.email?`<div><div class="expanded-label">Email</div><div class="expanded-val"><a href="mailto:${esc(v.email)}">${esc(v.email)}</a></div></div>`:''}
           ${v.website?`<div><div class="expanded-label">Website</div><div class="expanded-val"><a href="${esc(v.website)}" target="_blank">${esc(v.website)}</a></div></div>`:''}
           ${v.notes?`<div style="grid-column:1/-1"><div class="expanded-label">Notes</div><div class="expanded-val">${esc(v.notes)}</div></div>`:''}
+        </div>
+        <div class="vote-section" onclick="event.stopPropagation()">
+          <div class="vote-counts" id="votes-\${esc(v.id)}">
+            <span class="vote-loading">Loading ratings...</span>
+          </div>
+          <div class="vote-name-wrap">
+            <span class="vote-name-label">Your name</span>
+            <input class="vote-name-input" type="text" id="reviewer-\${esc(v.id)}" placeholder="Enter your name..." maxlength="60" onclick="event.stopPropagation()" onfocus="loadSavedName('\${esc(v.id)}')" />
+          </div>
+          <div class="vote-comment-wrap">
+            <input class="vote-comment-input" type="text" id="comment-\${esc(v.id)}" placeholder="Leave a comment (optional)..." maxlength="200" onclick="event.stopPropagation()" />
+            <button class="vote-submit" onclick="event.stopPropagation();submitVote('\${esc(v.id)}','up')">👍 Recommend</button>
+            <button class="vote-submit" style="background:#a32d2d;" onclick="event.stopPropagation();submitVote('\${esc(v.id)}','down')">👎 Not recommend</button>
+          </div>
+          <div class="vote-comments-list" id="comments-\${esc(v.id)}"></div>
         </div>
         <div class="card-actions-row">
           <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editCurrentFromCard('${esc(v.id)}')">
@@ -505,6 +698,8 @@ function renderVendors() {
       </div>
     </div>`;
   }).join('');
+  // Load vote previews after DOM is updated
+  setTimeout(() => list.forEach(v => loadVotes(v.id)), 300);
 }
 
 function openAdd() {
