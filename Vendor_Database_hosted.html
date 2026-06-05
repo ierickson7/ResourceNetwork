@@ -499,12 +499,28 @@ function expandCard(id) {
 }
 
 function goHome() {
+  // Reset service providers section
   document.getElementById('searchInput').value = '';
   document.getElementById('heroSection').classList.remove('has-results');
   document.getElementById('vendorHeader').style.display = 'none';
   document.getElementById('vendorGrid').innerHTML = '';
   document.getElementById('gotoSelect').value = '';
   activeTab = 'all';
+
+  // Reset referral section
+  document.getElementById('agentCityInput').value = '';
+  document.getElementById('referralGrid').innerHTML = '';
+  document.getElementById('referralResultsHeader').style.display = 'none';
+  document.getElementById('networkGrid').innerHTML = '';
+
+  // Reset to Search Agents tab
+  const tabs = document.querySelectorAll('.referral-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  if (tabs[0]) tabs[0].classList.add('active');
+  document.getElementById('referralSearchPane').style.display = 'block';
+  document.getElementById('referralNetworkPane').style.display = 'none';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 
