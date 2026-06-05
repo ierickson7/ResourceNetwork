@@ -205,6 +205,48 @@
   .vote-preview-pill.has-up { color: #1a7a35; }
   .vote-preview-pill.has-down { color: #a32d2d; }
   .vote-loading { font-size: 11px; color: #bbb; font-style: italic; }
+
+  /* ── Referral Section ── */
+  .referral-section { margin-top: 4rem; padding-top: 3rem; border-top: 2px solid var(--cream-darker); }
+  .referral-title { font-family: 'Contralto', serif; font-weight: 400; font-size: 3.6rem; color: var(--red); margin-bottom: 0.5rem; line-height: 1.1; }
+  .referral-sub { font-size: 15px; color: #aaa; margin-bottom: 2rem; }
+  .referral-search-row { display: flex; gap: 10px; max-width: 560px; margin-bottom: 1rem; }
+  .referral-search-input { flex: 1; padding: 15px 20px; border-radius: var(--radius-lg); border: 2px solid var(--cream-darker); background: #fff; color: var(--deep); font-family: var(--font-body); font-size: 15px; outline: none; transition: border-color 0.18s, box-shadow 0.18s; box-shadow: var(--shadow); }
+  .referral-search-input:focus { border-color: var(--deep); box-shadow: 0 4px 24px rgba(57,8,58,0.13); }
+  .referral-search-input::placeholder { color: #bbb; }
+  .referral-search-btn { padding: 15px 24px; border-radius: var(--radius-lg); border: none; background: var(--deep); color: var(--cream); font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .referral-search-btn:hover { background: #5a1260; }
+  .referral-search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .referral-results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .referral-results-title { font-family: 'Contralto', serif; font-weight: 400; font-size: 1.1rem; color: var(--deep); }
+  .referral-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 2rem; }
+  .agent-card { background: #fff; border: 1.5px solid var(--cream-darker); border-radius: var(--radius-lg); padding: 1.25rem; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
+  .agent-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--red); transform: scaleX(0); transform-origin: left; transition: transform 0.2s ease; }
+  .agent-card:hover { border-color: var(--deep); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+  .agent-card:hover::before { transform: scaleX(1); }
+  .agent-card.in-network { border-color: #34a853; }
+  .agent-card.in-network::before { background: #34a853; transform: scaleX(1); }
+  .agent-card.expanded { grid-column: 1 / -1; cursor: default; border-color: var(--deep); box-shadow: var(--shadow-lg); }
+  .agent-card.expanded::before { transform: scaleX(1); background: var(--red); }
+  .agent-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .agent-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Contralto', serif; font-size: 15px; flex-shrink: 0; background: var(--deep); color: var(--cream); }
+  .agent-avatar.green { background: #34a853; color: #fff; }
+  .agent-name { font-size: 15px; font-weight: 500; color: var(--deep); line-height: 1.2; }
+  .agent-brokerage { font-size: 12px; color: #aaa; margin-top: 2px; }
+  .agent-detail { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #666; margin-top: 6px; }
+  .agent-detail svg { width: 13px; height: 13px; stroke: #aaa; flex-shrink: 0; }
+  .network-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 20px; background: #e6f4ea; color: #1a7a35; margin-top: 4px; }
+  .agent-expanded-body { display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--cream-darker); }
+  .agent-card.expanded .agent-expanded-body { display: block; }
+  .agent-expanded-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px 24px; margin-bottom: 1rem; }
+  .add-to-network-btn { background: #34a853; color: #fff; border: none; border-radius: var(--radius); padding: 8px 16px; font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .add-to-network-btn:hover { background: #2d8f47; }
+  .add-to-network-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .referral-empty { text-align: center; padding: 3rem 1rem; color: #bbb; font-size: 14px; grid-column: 1/-1; }
+  .referral-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+  .referral-tab { padding: 6px 16px; border-radius: 30px; border: 1.5px solid var(--cream-darker); background: transparent; font-family: var(--font-body); font-size: 12px; font-weight: 500; color: #888; cursor: pointer; transition: all 0.15s; }
+  .referral-tab.active { background: var(--deep); color: var(--cream); border-color: var(--deep); }
+  .agent-vote-preview { margin-top: 8px; display: flex; gap: 10px; align-items: center; min-height: 20px; }
 </style>
 
 
@@ -243,6 +285,65 @@
 
   </div>
 </div>
+
+  <!-- REFERRAL SECTION -->
+  <div class="referral-section" id="referralSection">
+    <div class="referral-title">Agent Referral Network</div>
+    <p class="referral-sub">Search for top agents in any city — save the ones you've worked with to build our network</p>
+
+    <div class="referral-tabs">
+      <button class="referral-tab active" onclick="setReferralTab('search', this)">Search Agents</button>
+      <button class="referral-tab" onclick="setReferralTab('network', this)">Our Network</button>
+    </div>
+
+    <div id="referralSearchPane">
+      <div class="referral-search-row">
+        <input class="referral-search-input" type="text" id="agentCityInput" placeholder="Enter a city, e.g. Houston, TX..." onkeydown="if(event.key==='Enter') searchAgents()" />
+        <button class="referral-search-btn" onclick="searchAgents()" id="agentSearchBtn">Search</button>
+      </div>
+      <div id="referralResultsHeader" style="display:none;" class="referral-results-header">
+        <span class="referral-results-title" id="referralResultsTitle"></span>
+        <span style="font-size:12px;color:#aaa" id="referralResultsCount"></span>
+      </div>
+      <div class="referral-grid" id="referralGrid"></div>
+    </div>
+
+    <div id="referralNetworkPane" style="display:none;">
+      <div class="referral-results-header">
+        <span class="referral-results-title">Agents in our network</span>
+        <span style="font-size:12px;color:#aaa" id="networkCount"></span>
+      </div>
+      <div class="referral-grid" id="networkGrid"></div>
+    </div>
+  </div>
+
+  <!-- ADD AGENT MODAL -->
+  <div class="modal-overlay" id="addAgentModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add Agent to Network</div>
+        <button class="modal-close" onclick="closeModal('addAgentModal')">&#x2715;</button>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="field-label">Agent name *</label><input type="text" id="ag-name" /></div>
+        <div class="form-row"><label class="field-label">Brokerage</label><input type="text" id="ag-brokerage" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="field-label">City *</label><input type="text" id="ag-city" /></div>
+        <div class="form-row"><label class="field-label">State</label><input type="text" id="ag-state" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="field-label">Phone</label><input type="tel" id="ag-phone" /></div>
+        <div class="form-row"><label class="field-label">Email</label><input type="email" id="ag-email" /></div>
+      </div>
+      <div class="form-row"><label class="field-label">Website</label><input type="url" id="ag-website" /></div>
+      <div class="form-row"><label class="field-label">Specialty / Notes</label><textarea id="ag-notes" style="height:70px;resize:vertical;"></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('addAgentModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveAgentToNetwork()">Add to Network</button>
+      </div>
+    </div>
+  </div>
 
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="addModal">
@@ -832,7 +933,310 @@ function confirmImport() {
 }
 
 load();
-</script>
-</div>
 
-</body></html>
+
+// ── Referral Agent Network ──────────────────────────────────────────────────
+const GOOGLE_API_KEY = 'AIzaSyBugz1HzGyWhDe5Nddu5tYzkt7r72m02gY';
+let networkAgents = [];
+
+function setReferralTab(tab, el) {
+  document.querySelectorAll('.referral-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('referralSearchPane').style.display = tab === 'search' ? 'block' : 'none';
+  document.getElementById('referralNetworkPane').style.display = tab === 'network' ? 'block' : 'none';
+  if (tab === 'network') loadNetworkAgents();
+}
+
+async function searchAgents() {
+  const city = document.getElementById('agentCityInput').value.trim();
+  if (!city) return;
+  const btn = document.getElementById('agentSearchBtn');
+  btn.disabled = true;
+  btn.textContent = 'Searching...';
+  document.getElementById('referralGrid').innerHTML = '<div class="referral-empty">Searching for agents...</div>';
+  document.getElementById('referralResultsHeader').style.display = 'none';
+  const service = new google.maps.places.PlacesService(document.createElement('div'));
+  service.textSearch({ query: 'real estate agent ' + city }, async (results, status) => {
+    btn.disabled = false;
+    btn.textContent = 'Search';
+    if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length) {
+      const saved = await supaFetch('referral_agents?select=google_place_id,id,name');
+      const savedPlaceIds = new Set((saved||[]).map(a => a.google_place_id).filter(Boolean));
+      const savedNames = new Set((saved||[]).map(a => (a.name||'').toLowerCase()));
+      document.getElementById('referralResultsHeader').style.display = 'flex';
+      document.getElementById('referralResultsTitle').textContent = 'Agents in ' + city;
+      document.getElementById('referralResultsCount').textContent = results.length + ' found';
+      window._agentSearchResults = results;
+      const grid = document.getElementById('referralGrid');
+      grid.innerHTML = results.map((place, i) => {
+        const inNetwork = savedPlaceIds.has(place.place_id) || savedNames.has((place.name||'').toLowerCase());
+        const av = agentInitials(place.name || '?');
+        const rating = place.rating ? ('&#x2B50; ' + place.rating + ' (' + (place.user_ratings_total||0) + ')') : '';
+        return '<div class="agent-card' + (inNetwork ? ' in-network' : '') + '" id="acard-' + i + '" onclick="expandAgentCard(' + i + ')">' +
+          '<div class="agent-top">' +
+          '<div class="agent-avatar' + (inNetwork ? ' green' : '') + '">' + av + '</div>' +
+          '<div><div class="agent-name">' + esc(place.name) + '</div>' +
+          '<div class="agent-brokerage">' + esc(place.formatted_address||'') + '</div>' +
+          (inNetwork ? '<div class="network-badge">&#x2713; In Network</div>' : '') +
+          '</div></div>' +
+          (rating ? '<div class="agent-detail">' + rating + '</div>' : '') +
+          '<div class="agent-vote-preview" id="avpreview-' + i + '"><span style="font-size:11px;color:#bbb;font-style:italic;">Loading...</span></div>' +
+          '<div class="agent-expanded-body" id="aexpanded-' + i + '"></div></div>';
+      }).join('');
+      setTimeout(() => {
+        results.forEach((place, i) => loadAgentVotes(place.place_id || place.name, i, false));
+      }, 300);
+    } else {
+      document.getElementById('referralGrid').innerHTML = '<div class="referral-empty">No agents found. Try a different city.</div>';
+      document.getElementById('referralResultsHeader').style.display = 'flex';
+      document.getElementById('referralResultsTitle').textContent = 'Results for "' + city + '"';
+      document.getElementById('referralResultsCount').textContent = '0 agents';
+    }
+  });
+}
+
+function agentInitials(name) {
+  return name.trim().split(/\s+/).slice(0,2).map(w => w[0] ? w[0].toUpperCase() : '').join('');
+}
+
+function expandAgentCard(idx) {
+  const place = (window._agentSearchResults || [])[idx];
+  if (!place) return;
+  const card = document.getElementById('acard-' + idx);
+  if (!card) return;
+  const isExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.agent-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!isExpanded) {
+    card.classList.add('expanded');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const expEl = document.getElementById('aexpanded-' + idx);
+    expEl.innerHTML = '<div style="padding:1rem 0;color:#bbb;font-size:13px;">Loading details...</div>';
+    const service = new google.maps.places.PlacesService(document.createElement('div'));
+    service.getDetails({
+      placeId: place.place_id,
+      fields: ['name','formatted_phone_number','website','formatted_address','rating','url']
+    }, (details, status) => {
+      const p = (status === 'OK' && details) ? details : place;
+      window['_ap_' + idx] = p;
+      const agentId = place.place_id || place.name;
+      window['_aid_' + idx] = agentId;
+      const saved = networkAgents.find(a => a.google_place_id === place.place_id || (a.name||'').toLowerCase() === (place.name||'').toLowerCase());
+      expEl.innerHTML = buildAgentExpandHTML(idx, p, agentId, !!saved);
+      setTimeout(() => loadAgentVotes(agentId, idx, false), 150);
+    });
+  }
+}
+
+function buildAgentExpandHTML(idx, p, agentId, inNetwork) {
+  const e = esc;
+  return '<div class="agent-expanded-grid">' +
+    (p.formatted_phone_number ? '<div><div class="expanded-label">Phone</div><div class="expanded-val"><a href="tel:' + e(p.formatted_phone_number) + '">' + e(p.formatted_phone_number) + '</a></div></div>' : '') +
+    (p.website ? '<div><div class="expanded-label">Website</div><div class="expanded-val"><a href="' + e(p.website) + '" target="_blank">' + e(p.website) + '</a></div></div>' : '') +
+    (p.formatted_address ? '<div style="grid-column:1/-1"><div class="expanded-label">Address</div><div class="expanded-val">' + e(p.formatted_address) + '</div></div>' : '') +
+    (p.url ? '<div><div class="expanded-label">Google Maps</div><div class="expanded-val"><a href="' + e(p.url) + '" target="_blank">View on Maps</a></div></div>' : '') +
+    '</div>' +
+    (inNetwork
+      ? '<div class="network-badge" style="display:inline-flex;margin-bottom:1rem;">&#x2713; Already in our network</div>'
+      : '<button class="add-to-network-btn" onclick="event.stopPropagation();openAddFromCard(' + idx + ')">+ Add to Our Network</button>') +
+    '<div class="vote-section" onclick="event.stopPropagation()">' +
+    '<div class="vote-counts" id="avotes-' + idx + '"><span class="vote-loading">Loading ratings...</span></div>' +
+    '<div class="vote-name-wrap"><span class="vote-name-label">Your name</span>' +
+    '<input class="vote-name-input" type="text" id="areviewer-' + idx + '" placeholder="Enter your name..." maxlength="60" onclick="event.stopPropagation()" /></div>' +
+    '<div class="vote-comment-wrap">' +
+    '<input class="vote-comment-input" type="text" id="acomment-' + idx + '" placeholder="Leave a comment (optional)..." maxlength="200" onclick="event.stopPropagation()" />' +
+    '<button class="vote-submit" onclick="event.stopPropagation();submitAgentVote(window[\'_aid_' + idx + '\'],' + idx + ',\'up\',\'a\')">&#x1F44D; Recommend</button>' +
+    '<button class="vote-submit" style="background:#a32d2d;" onclick="event.stopPropagation();submitAgentVote(window[\'_aid_' + idx + '\'],' + idx + ',\'down\',\'a\')">&#x1F44E; Not recommend</button>' +
+    '</div><div class="vote-comments-list" id="acomments-' + idx + '"></div></div>' +
+    '<div style="margin-top:1rem;padding-top:1rem;border-top:1.5px solid var(--cream-darker);">' +
+    '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();collapseAgent(\'acard-' + idx + '\')">Collapse</button></div>';
+}
+
+function collapseAgent(cardId) {
+  const card = document.getElementById(cardId);
+  if (card) card.classList.remove('expanded');
+}
+
+function submitAgentVoteNA(idx, voteType) {
+  const a = networkAgents[idx];
+  if (!a) return;
+  const agentId = a.google_place_id || a.id;
+  submitAgentVote(agentId, idx, voteType, 'na');
+}
+
+function openAddFromCard(idx) {
+  const p = window['_ap_' + idx];
+  if (!p) return;
+  populateAddAgentModal(p, place_id = window['_aid_' + idx]);
+  document.getElementById('addAgentModal').classList.add('open');
+}
+
+function populateAddAgentModal(p, placeId) {
+  document.getElementById('ag-name').value = p.name || '';
+  document.getElementById('ag-brokerage').value = p.vicinity || p.formatted_address || '';
+  const cityInput = document.getElementById('agentCityInput').value.trim();
+  document.getElementById('ag-city').value = cityInput.split(',')[0] || '';
+  document.getElementById('ag-state').value = (cityInput.split(',')[1] || '').trim();
+  document.getElementById('ag-phone').value = p.formatted_phone_number || '';
+  document.getElementById('ag-email').value = '';
+  document.getElementById('ag-website').value = p.website || '';
+  document.getElementById('ag-notes').value = '';
+  document.getElementById('addAgentModal')._placeId = placeId || p.place_id || '';
+}
+
+async function saveAgentToNetwork() {
+  const name = document.getElementById('ag-name').value.trim();
+  const city = document.getElementById('ag-city').value.trim();
+  if (!name || !city) { alert('Name and city are required.'); return; }
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  await supaFetch('referral_agents', {
+    method: 'POST',
+    body: JSON.stringify({
+      name, city,
+      brokerage: document.getElementById('ag-brokerage').value.trim() || null,
+      state: document.getElementById('ag-state').value.trim() || null,
+      phone: document.getElementById('ag-phone').value.trim() || null,
+      email: document.getElementById('ag-email').value.trim() || null,
+      website: document.getElementById('ag-website').value.trim() || null,
+      notes: document.getElementById('ag-notes').value.trim() || null,
+      google_place_id: document.getElementById('addAgentModal')._placeId || null,
+      added_by: localStorage.getItem('ern_reviewer_name') || null
+    }),
+    headers: { 'Prefer': 'return=minimal' }
+  });
+  btn.disabled = false;
+  btn.textContent = 'Add to Network';
+  closeModal('addAgentModal');
+  searchAgents();
+}
+
+async function loadNetworkAgents() {
+  const agents = await supaFetch('referral_agents?order=created_at.desc&select=*');
+  networkAgents = agents || [];
+  document.getElementById('networkCount').textContent = networkAgents.length + ' agent' + (networkAgents.length !== 1 ? 's' : '');
+  const grid = document.getElementById('networkGrid');
+  if (!networkAgents.length) {
+    grid.innerHTML = '<div class="referral-empty">No agents yet. Search for agents and add ones you&#39;ve worked with!</div>';
+    return;
+  }
+  grid.innerHTML = networkAgents.map((a, i) => {
+    const av = agentInitials(a.name);
+    return '<div class="agent-card in-network" id="nacard-' + i + '" onclick="expandNetworkAgent(' + i + ')">' +
+      '<div class="agent-top"><div class="agent-avatar green">' + av + '</div>' +
+      '<div><div class="agent-name">' + esc(a.name) + '</div>' +
+      '<div class="agent-brokerage">' + esc([a.brokerage, a.city, a.state].filter(Boolean).join(', ')) + '</div>' +
+      '<div class="network-badge">&#x2713; In Network</div></div></div>' +
+      (a.phone ? '<div class="agent-detail">' + esc(a.phone) + '</div>' : '') +
+      (a.email ? '<div class="agent-detail">' + esc(a.email) + '</div>' : '') +
+      '<div class="agent-vote-preview" id="navpreview-' + i + '"><span style="font-size:11px;color:#bbb;font-style:italic;">Loading...</span></div>' +
+      '<div class="agent-expanded-body" id="naexpanded-' + i + '"></div></div>';
+  }).join('');
+  setTimeout(() => networkAgents.forEach((a, i) => loadAgentVotes(a.google_place_id || a.id, i, true)), 300);
+}
+
+function expandNetworkAgent(idx) {
+  const card = document.getElementById('nacard-' + idx);
+  if (!card) return;
+  const isExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.agent-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!isExpanded) {
+    card.classList.add('expanded');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const a = networkAgents[idx];
+    const agentId = a.google_place_id || a.id;
+    window['_naid_' + idx] = agentId;
+    const expEl = document.getElementById('naexpanded-' + idx);
+    expEl.innerHTML =
+      '<div class="agent-expanded-grid">' +
+      (a.phone ? '<div><div class="expanded-label">Phone</div><div class="expanded-val"><a href="tel:' + esc(a.phone) + '">' + esc(a.phone) + '</a></div></div>' : '') +
+      (a.email ? '<div><div class="expanded-label">Email</div><div class="expanded-val"><a href="mailto:' + esc(a.email) + '">' + esc(a.email) + '</a></div></div>' : '') +
+      (a.website ? '<div><div class="expanded-label">Website</div><div class="expanded-val"><a href="' + esc(a.website) + '" target="_blank">' + esc(a.website) + '</a></div></div>' : '') +
+      (a.city ? '<div><div class="expanded-label">Location</div><div class="expanded-val">' + esc([a.city, a.state].filter(Boolean).join(', ')) + '</div></div>' : '') +
+      (a.notes ? '<div style="grid-column:1/-1"><div class="expanded-label">Notes</div><div class="expanded-val">' + esc(a.notes) + '</div></div>' : '') +
+      '</div>' +
+      '<div class="vote-section" onclick="event.stopPropagation()">' +
+      '<div class="vote-counts" id="navotes-' + idx + '"><span class="vote-loading">Loading ratings...</span></div>' +
+      '<div class="vote-name-wrap"><span class="vote-name-label">Your name</span>' +
+      '<input class="vote-name-input" type="text" id="nareviewer-' + idx + '" placeholder="Enter your name..." maxlength="60" onclick="event.stopPropagation()" /></div>' +
+      '<div class="vote-comment-wrap">' +
+      '<input class="vote-comment-input" type="text" id="nacomment-' + idx + '" placeholder="Leave a comment (optional)..." maxlength="200" onclick="event.stopPropagation()" />' +
+      '<button class="vote-submit" onclick="event.stopPropagation();submitAgentVoteNA(' + idx + ',\"up\")">&#x1F44D; Recommend</button>' +
+      '<button class="vote-submit" style="background:#a32d2d;" onclick="event.stopPropagation();submitAgentVoteNA(' + idx + ',\"down\")">&#x1F44E; Not recommend</button>' +
+      '</div><div class="vote-comments-list" id="nacomments-' + idx + '"></div></div>' +
+      '<div style="margin-top:1rem;padding-top:1rem;border-top:1.5px solid var(--cream-darker);">' +
+      '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();collapseAgent(\"nacard-' + idx + '\")">Collapse</button></div>';
+    setTimeout(() => loadAgentVotes(agentId, idx, true), 150);
+  }
+}
+
+
+async function loadAgentVotes(agentId, idx, isNetwork) {
+  const prefix = isNetwork ? 'na' : 'a';
+  const countEl = document.getElementById(prefix + 'votes-' + idx);
+  const previewEl = document.getElementById(prefix + 'vpreview-' + idx);
+  if (!countEl && !previewEl) return;
+  const counts = await supaFetch('agent_vote_counts?agent_id=eq.' + encodeURIComponent(agentId) + '&select=up_count,down_count');
+  const up = counts && counts[0] ? counts[0].up_count : 0;
+  const down = counts && counts[0] ? counts[0].down_count : 0;
+  if (countEl) {
+    countEl.innerHTML =
+      '<span class="vote-btn voted-up">&#x1F44D; ' + up + '</span>' +
+      '<span class="vote-btn voted-down">&#x1F44E; ' + down + '</span>' +
+      '<span style="font-size:11px;color:#bbb;">' + (up+down) + ' rating' + (up+down!==1?'s':'') + '</span>';
+  }
+  if (previewEl) {
+    previewEl.innerHTML = (up===0&&down===0)
+      ? '<span style="font-size:11px;color:#bbb;font-style:italic;">No ratings yet</span>'
+      : (up>0 ? '<span class="vote-preview-pill has-up">&#x1F44D; '+up+'</span>' : '') +
+        (down>0 ? '<span class="vote-preview-pill has-down">&#x1F44E; '+down+'</span>' : '');
+  }
+  const commentsEl = document.getElementById(prefix + 'comments-' + idx);
+  if (commentsEl) {
+    const votes = await supaFetch('agent_votes?agent_id=eq.' + encodeURIComponent(agentId) + '&order=created_at.desc&limit=10&select=vote,comment,reviewer_name');
+    if (votes && votes.length) {
+      commentsEl.innerHTML = votes.map(v =>
+        '<div class="vote-comment-item"><span>' + (v.vote==='up'?'&#x1F44D;':'&#x1F44E;') + '</span><div>' +
+        (v.reviewer_name ? '<span class="vote-comment-reviewer">' + esc(v.reviewer_name) + '</span>' : '') +
+        (v.comment ? '<span>' + esc(v.comment) + '</span>' : '<span style="color:#bbb;font-style:italic;">No comment</span>') +
+        '</div></div>').join('');
+    } else {
+      commentsEl.innerHTML = '<div style="font-size:12px;color:#bbb;padding:6px 0;font-style:italic;">No ratings yet — be the first!</div>';
+    }
+  }
+}
+
+async function submitAgentVote(agentId, idx, voteType, prefix) {
+  const reviewerInput = document.getElementById(prefix + 'reviewer-' + idx);
+  const commentInput = document.getElementById(prefix + 'comment-' + idx);
+  const reviewerName = reviewerInput ? reviewerInput.value.trim() : '';
+  const comment = commentInput ? commentInput.value.trim() : '';
+  if (!reviewerName) {
+    if (reviewerInput) {
+      reviewerInput.style.borderColor = '#FD5247';
+      reviewerInput.placeholder = 'Please enter your name first...';
+      reviewerInput.focus();
+      setTimeout(() => { reviewerInput.style.borderColor=''; reviewerInput.placeholder='Enter your name...'; }, 2500);
+    }
+    return;
+  }
+  localStorage.setItem('ern_reviewer_name', reviewerName);
+  await supaFetch('agent_votes', {
+    method: 'POST',
+    body: JSON.stringify({ agent_id: agentId, vote: voteType, comment: comment||null, reviewer_name: reviewerName }),
+    headers: { 'Prefer': 'return=minimal' }
+  });
+  const existing = await supaFetch('agent_vote_counts?agent_id=eq.' + encodeURIComponent(agentId) + '&select=up_count,down_count');
+  const cur = existing && existing[0] ? existing[0] : { up_count:0, down_count:0 };
+  await supaFetch('agent_vote_counts', {
+    method: 'POST',
+    body: JSON.stringify({ agent_id: agentId, up_count:(cur.up_count||0)+(voteType==='up'?1:0), down_count:(cur.down_count||0)+(voteType==='down'?1:0) }),
+    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }
+  });
+  if (commentInput) commentInput.value = '';
+  await loadAgentVotes(agentId, idx, prefix==='na');
+}
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBugz1HzGyWhDe5Nddu5tYzkt7r72m02gY&libraries=places&loading=async"></script>
+</html>
