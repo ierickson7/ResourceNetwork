@@ -683,27 +683,21 @@ function loadSavedName(vendorId) {
   }
 }
 
-function load() {
+async function load() {
+  vendors = [...SEED_VENDORS];
   try {
-    const raw = localStorage.getItem('vendordb_vendors');
-    const seedIds = new Set(SEED_VENDORS.map(v => v.id));
-    if (raw) {
-      const saved = JSON.parse(raw);
-      // Keep seed vendors fresh from source, plus any user-added vendors (ids not in seed)
-      const userAdded = saved.filter(v => !seedIds.has(v.id));
-      vendors = [...SEED_VENDORS, ...userAdded];
-    } else {
-      vendors = [...SEED_VENDORS];
+    const dbVendors = await supaFetch('vendors?order=created_at.asc&select=*');
+    if (dbVendors && dbVendors.length) {
+      const seedNames = new Set(SEED_VENDORS.map(v => v.name.toLowerCase()));
+      const newVendors = dbVendors.filter(v => !seedNames.has((v.name||'').toLowerCase()));
+      vendors = [...SEED_VENDORS, ...newVendors];
     }
-    localStorage.setItem('vendordb_vendors', JSON.stringify(vendors));
-  } catch(e) { vendors = [...SEED_VENDORS]; }
+  } catch(e) { console.warn('Could not load vendors from Supabase:', e); }
   buildTabs();
   // Don't render vendors on load — homepage shows only search + category grid
 }
 
-function save() {
-  try { localStorage.setItem('vendordb_vendors', JSON.stringify(vendors)); } catch(e) {}
-}
+function save() { /* data now stored in Supabase */ }
 
 function colorFor(name) {
   let h = 0;
@@ -928,27 +922,49 @@ function openAdd() {
   document.getElementById('addModal').classList.add('open');
 }
 
-function saveVendor() {
+async function saveVendor() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { document.getElementById('f-name').focus(); return; }
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
   const v = {
-    id: editingId || Date.now().toString(),
     name,
-    contact: document.getElementById('f-contact').value.trim(),
-    phone: document.getElementById('f-phone').value.trim(),
-    email: document.getElementById('f-email').value.trim(),
-    address: document.getElementById('f-addr').value.trim(),
-    category: document.getElementById('f-cat').value,
-    notes: document.getElementById('f-notes').value.trim(),
-    website: document.getElementById('f-website').value.trim(),
+    contact: document.getElementById('f-contact').value.trim() || null,
+    phone: document.getElementById('f-phone').value.trim() || null,
+    email: document.getElementById('f-email').value.trim() || null,
+    address: document.getElementById('f-addr').value.trim() || null,
+    category: document.getElementById('f-cat').value || null,
+    notes: document.getElementById('f-notes').value.trim() || null,
+    website: document.getElementById('f-website').value.trim() || null,
+    added_by: localStorage.getItem('ern_reviewer_name') || null,
   };
   if (editingId) {
+    // Check if it's a Supabase vendor (uuid) or seed vendor
+    const isSeedVendor = SEED_VENDORS.some(s => s.id === editingId);
+    if (!isSeedVendor) {
+      await supaFetch('vendors?id=eq.' + editingId, {
+        method: 'PATCH',
+        body: JSON.stringify(v),
+        headers: { 'Prefer': 'return=minimal' }
+      });
+    }
     const i = vendors.findIndex(x => x.id === editingId);
-    if (i > -1) vendors[i] = v;
+    if (i > -1) vendors[i] = { ...vendors[i], ...v };
   } else {
-    vendors.push(v);
+    // Save to Supabase
+    const result = await supaFetch('vendors', {
+      method: 'POST',
+      body: JSON.stringify(v),
+      headers: { 'Prefer': 'return=representation' }
+    });
+    // Add to local vendors array with Supabase-generated id
+    const saved = result && result[0] ? result[0] : { ...v, id: Date.now().toString() };
+    vendors.push(saved);
   }
-  save(); buildTabs(); renderVendors();
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Save Service Provider';
+  buildTabs(); renderVendors();
   closeModal('addModal');
 }
 
@@ -1002,10 +1018,17 @@ function editCurrent() {
   document.getElementById('addModal').classList.add('open');
 }
 
-function deleteCurrent() {
+async function deleteCurrent() {
   if (!confirm('Delete this vendor? This cannot be undone.')) return;
+  const isSeedVendor = SEED_VENDORS.some(s => s.id === currentId);
+  if (!isSeedVendor) {
+    await supaFetch('vendors?id=eq.' + currentId, {
+      method: 'DELETE',
+      headers: { 'Prefer': 'return=minimal' }
+    });
+  }
   vendors = vendors.filter(x => x.id !== currentId);
-  save(); buildTabs(); renderVendors();
+  buildTabs(); renderVendors();
   closeModal('viewModal');
 }
 
