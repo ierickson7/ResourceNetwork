@@ -357,7 +357,7 @@
     </div>
     <div class="form-grid">
       <div class="form-row"><label class="field-label">Company Name *</label><input type="text" id="f-name" placeholder="Acme Corp"></div>
-      <div class="form-row"><label class="field-label">Category</label>
+      <div class="form-row"><label class="field-label" ondblclick="unlockAdminCategory()" title="">Category</label>
         <select id="f-cat">
           <option value="">— select —</option>
           <option>Appliance Repair</option>
@@ -422,7 +422,7 @@
           <option>Window Cleaner/Washing</option>
           <option>Window Repair</option>
         </select>
-        <div style="margin-top:6px;">
+        <div id="addCatSection" style="display:none;margin-top:6px;">
           <button type="button" class="btn btn-ghost btn-sm" onclick="toggleNewCategory()" id="addCatToggle" style="font-size:12px;padding:4px 10px;">+ Add new category</button>
           <div id="newCatWrap" style="display:none;margin-top:8px;">
             <div style="display:flex;gap:8px;margin-top:4px;">
@@ -895,6 +895,25 @@ function addNewCategory() {
   input.value = '';
 }
 
+const ADMIN_PASS = 'Welcome123_IE';
+
+function unlockAdminCategory() {
+  const entered = prompt('Enter admin password to add a new category:');
+  if (entered === ADMIN_PASS) {
+    document.getElementById('addCatSection').style.display = 'block';
+    localStorage.setItem('ern_admin', '1');
+  } else if (entered !== null) {
+    alert('Incorrect password.');
+  }
+}
+
+function checkAdminOnOpen() {
+  if (localStorage.getItem('ern_admin') === '1') {
+    const sec = document.getElementById('addCatSection');
+    if (sec) sec.style.display = 'block';
+  }
+}
+
 function openAdd() {
   editingId = null;
   document.getElementById('addModalTitle').textContent = 'Add Service Provider';
@@ -905,6 +924,7 @@ function openAdd() {
   });
   const selectedCategory = (activeTab && activeTab !== 'all') ? activeTab : '';
   document.getElementById('f-cat').value = selectedCategory;
+  checkAdminOnOpen();
   document.getElementById('addModal').classList.add('open');
 }
 
