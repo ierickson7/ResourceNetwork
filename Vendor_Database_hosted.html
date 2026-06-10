@@ -422,6 +422,15 @@
           <option>Window Cleaner/Washing</option>
           <option>Window Repair</option>
         </select>
+        <div style="margin-top:6px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="toggleNewCategory()" id="addCatToggle" style="font-size:12px;padding:4px 10px;">+ Add new category</button>
+          <div id="newCatWrap" style="display:none;margin-top:8px;display:none;flex-gap:8px;">
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <input type="text" id="newCatInput" placeholder="e.g. Landscaper" style="flex:1;padding:7px 10px;font-size:13px;border-radius:var(--radius);border:1.5px solid var(--cream-darker);font-family:var(--font-body);outline:none;" />
+              <button type="button" class="btn btn-primary btn-sm" onclick="addNewCategory()" style="white-space:nowrap;">Add</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="form-grid">
@@ -840,6 +849,50 @@ function renderVendors() {
   }).join('')
   // Load vote previews
   setTimeout(() => list.forEach(v => loadVotes(v.id)), 400);;
+}
+
+function toggleNewCategory() {
+  const wrap = document.getElementById('newCatWrap');
+  const btn = document.getElementById('addCatToggle');
+  if (wrap.style.display === 'none' || !wrap.style.display) {
+    wrap.style.display = 'block';
+    btn.textContent = '− Cancel';
+    setTimeout(() => document.getElementById('newCatInput').focus(), 50);
+  } else {
+    wrap.style.display = 'none';
+    btn.textContent = '+ Add new category';
+    document.getElementById('newCatInput').value = '';
+  }
+}
+
+function addNewCategory() {
+  const input = document.getElementById('newCatInput');
+  const newCat = input.value.trim();
+  if (!newCat) return;
+  const select = document.getElementById('f-cat');
+  // Check if already exists
+  const exists = Array.from(select.options).some(o => o.value.toLowerCase() === newCat.toLowerCase());
+  if (exists) {
+    select.value = newCat;
+  } else {
+    // Add new option in alphabetical order
+    const option = new Option(newCat, newCat);
+    const options = Array.from(select.options).slice(1); // skip the "— select —"
+    let inserted = false;
+    for (let i = 0; i < options.length; i++) {
+      if (newCat.toLowerCase() < options[i].value.toLowerCase()) {
+        select.insertBefore(option, options[i]);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) select.appendChild(option);
+    select.value = newCat;
+  }
+  // Hide the input
+  document.getElementById('newCatWrap').style.display = 'none';
+  document.getElementById('addCatToggle').textContent = '+ Add new category';
+  input.value = '';
 }
 
 function openAdd() {
