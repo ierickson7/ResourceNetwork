@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- saved from url=(0072)https://ierickson7.github.io/ResourceNetwork/Vendor_Database_hosted.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,7 +63,6 @@
   @media (max-width: 600px) {
     header { padding: 0.9rem 1rem; }
     .logo img { height: 24px !important; }
-    .ai-style-change-1 { margin-left: 0.1in !important; font-size: 13px; }
     .btn-primary span { display: none; }
     .header-actions .btn { padding: 7px 10px; font-size: 12px; }
   }
@@ -105,8 +103,6 @@
   .search-input::placeholder { color: #bbb; }
   .search-input:focus { border-color: var(--deep); box-shadow: 0 4px 24px rgba(57,8,58,0.13); }
 
-
-  .filter-row { display: none; }
 
   .vendor-card { background: #fff; border: 1.5px solid var(--cream-darker); border-radius: var(--radius-lg); padding: 1.25rem; cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
   .vendor-card.expanded { grid-column: 1 / -1; cursor: default; border-color: var(--deep); box-shadow: var(--shadow-lg); }
@@ -441,6 +437,12 @@
     <div class="form-row"><label class="field-label">Website</label><input type="url" id="f-website" placeholder="https://example.com"></div>
     <div class="form-row"><label class="field-label">Address</label><input type="text" id="f-addr" placeholder="123 Main St, City, State ZIP"></div>
     <div class="form-row"><label class="field-label">Notes</label><textarea id="f-notes" placeholder="Any additional details..."></textarea></div>
+    <div class="form-row">
+      <label class="field-label">Added By *</label>
+      <select id="f-addedby">
+        <option value="">— select your name —</option>
+      </select>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal(&#39;addModal&#39;)">Cancel</button>
       <button class="btn btn-primary" id="saveBtn" onclick="saveVendor()">Save Service Provider</button>
@@ -741,11 +743,6 @@ function gotoCategory(sel) {
   });
 }
 
-function setTabFromSelect(sel) {
-  activeTab = sel.value;
-  selectCat(activeTab);
-}
-
 function selectCat(cat) {
   activeTab = cat;
   document.getElementById('sectionTitle').textContent = cat;
@@ -753,19 +750,6 @@ function selectCat(cat) {
   document.getElementById('heroSection').classList.add('has-results');
   buildTabs();
   renderVendors();
-}
-
-function setTab(t) {
-  selectCat(t);
-}
-
-function renderStats() {
-  const cats = [...new Set(vendors.map(v => v.category).filter(Boolean))];
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="stat-label">Total Vendors</div><div class="stat-value red">${vendors.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Categories</div><div class="stat-value">${cats.length}</div></div>
-    <div class="stat-card"><div class="stat-label">With Email</div><div class="stat-value">${vendors.filter(v=>v.email).length}</div></div>
-    <div class="stat-card"><div class="stat-label">With Phone</div><div class="stat-value">${vendors.filter(v=>v.phone).length}</div></div>`;
 }
 
 function onSearch() {
@@ -815,6 +799,7 @@ function renderVendors() {
           ${v.email?`<div><div class="expanded-label">Email</div><div class="expanded-val"><a href="mailto:${esc(v.email)}">${esc(v.email)}</a></div></div>`:''}
           ${v.website?`<div><div class="expanded-label">Website</div><div class="expanded-val"><a href="${esc(v.website)}" target="_blank">${esc(v.website)}</a></div></div>`:''}
           ${v.notes?`<div style="grid-column:1/-1"><div class="expanded-label">Notes</div><div class="expanded-val">${esc(v.notes)}</div></div>`:''}
+          ${v.added_by?`<div><div class="expanded-label">Added By</div><div class="expanded-val">${esc(v.added_by)}</div></div>`:''}
         </div>
         <div class="vote-section" onclick="event.stopPropagation()">
           <div class="vote-counts" id="votes-${esc(v.id)}"><span class="vote-loading">Loading ratings...</span></div>
@@ -908,7 +893,7 @@ function checkAdminOnOpen() {
   }
 }
 
-function openAdd() {
+async function openAdd() {
   editingId = null;
   document.getElementById('addModalTitle').textContent = 'Add Service Provider';
   document.getElementById('saveBtn').textContent = 'Save Service Provider';
@@ -916,15 +901,47 @@ function openAdd() {
     const el = document.getElementById('f-'+f);
     if (el) el.value = '';
   });
+  document.getElementById('f-addedby').value = '';
   const selectedCategory = (activeTab && activeTab !== 'all') ? activeTab : '';
   document.getElementById('f-cat').value = selectedCategory;
   checkAdminOnOpen();
+  await loadBrokers();
   document.getElementById('addModal').classList.add('open');
+}
+
+async function loadBrokers() {
+  const sel = document.getElementById('f-addedby');
+  if (!sel) return;
+  // Only load if not already populated
+  if (sel.options.length > 1) return;
+  const brokers = await supaFetch('brokers?active=eq.true&order=name.asc&select=name');
+  if (brokers && brokers.length) {
+    brokers.forEach(b => {
+      const opt = new Option(b.name, b.name);
+      sel.appendChild(opt);
+    });
+  }
+  // Restore saved name if matches a broker
+  const saved = localStorage.getItem('ern_reviewer_name');
+  if (saved) {
+    const match = Array.from(sel.options).find(o => o.value === saved);
+    if (match) sel.value = saved;
+  }
 }
 
 async function saveVendor() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { document.getElementById('f-name').focus(); return; }
+  const addedBy = document.getElementById('f-addedby').value;
+  if (!addedBy) {
+    const sel = document.getElementById('f-addedby');
+    sel.style.borderColor = '#FD5247';
+    setTimeout(() => { sel.style.borderColor = ''; }, 2500);
+    sel.focus();
+    return;
+  }
+  // Save name to localStorage for future use
+  localStorage.setItem('ern_reviewer_name', addedBy);
   const saveBtn = document.getElementById('saveBtn');
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
@@ -937,7 +954,7 @@ async function saveVendor() {
     category: document.getElementById('f-cat').value || null,
     notes: document.getElementById('f-notes').value.trim() || null,
     website: document.getElementById('f-website').value.trim() || null,
-    added_by: localStorage.getItem('ern_reviewer_name') || null,
+    added_by: addedBy,
   };
   if (editingId) {
     // Check if it's a Supabase vendor (uuid) or seed vendor
