@@ -1039,7 +1039,7 @@ function deleteFromCard(id) {
   deleteCurrent();
 }
 
-function editCurrent() {
+async function editCurrent() {
   const v = vendors.find(x => x.id === currentId);
   if (!v) return;
   closeModal('viewModal');
@@ -1054,6 +1054,8 @@ function editCurrent() {
   document.getElementById('f-cat').value = v.category||'';
   document.getElementById('f-notes').value = v.notes||'';
   document.getElementById('f-website').value = v.website||'';
+  await loadBrokers();
+  document.getElementById('f-addedby').value = v.added_by||'';
   document.getElementById('addModal').classList.add('open');
 }
 
