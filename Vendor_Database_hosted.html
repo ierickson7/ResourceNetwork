@@ -1165,7 +1165,12 @@ async function searchAgents() {
       const saved = await supaFetch('referral_agents?select=google_place_id,id,name');
       const savedPlaceIds = new Set((saved||[]).map(a => a.google_place_id).filter(Boolean));
       const savedNames = new Set((saved||[]).map(a => (a.name||'').toLowerCase()));
-      // Sort: network agents first, then the rest
+      // Also check networkAgents array (already loaded on page load)
+      networkAgents.forEach(a => {
+        if (a.google_place_id) savedPlaceIds.add(a.google_place_id);
+        if (a.name) savedNames.add(a.name.toLowerCase());
+      });
+      // Sort: network agents always first, ignore Google rating for ordering
       results.sort((a, b) => {
         const aIn = savedPlaceIds.has(a.place_id) || savedNames.has((a.name||'').toLowerCase());
         const bIn = savedPlaceIds.has(b.place_id) || savedNames.has((b.name||'').toLowerCase());
