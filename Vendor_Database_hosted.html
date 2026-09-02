@@ -1162,22 +1162,33 @@ async function searchAgents() {
     btn.disabled = false;
     btn.textContent = 'Search';
     if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length) {
-      const saved = await supaFetch('referral_agents?select=google_place_id,id,name');
-      const savedPlaceIds = new Set((saved||[]).map(a => a.google_place_id).filter(Boolean));
-      const savedNames = new Set((saved||[]).map(a => (a.name||'').toLowerCase()));
-      // Also check networkAgents array (already loaded on page load)
-      networkAgents.forEach(a => {
-        if (a.google_place_id) savedPlaceIds.add(a.google_place_id);
-        if (a.name) savedNames.add(a.name.toLowerCase());
-      });
-      // Sort: network agents always first, ignore Google rating for ordering
-      results.sort((a, b) => {
-        const aIn = savedPlaceIds.has(a.place_id) || savedNames.has((a.name||'').toLowerCase());
-        const bIn = savedPlaceIds.has(b.place_id) || savedNames.has((b.name||'').toLowerCase());
-        if (aIn && !bIn) return -1;
-        if (!aIn && bIn) return 1;
-        return 0;
-      });
+      // Fetch all network agents for this city from Supabase
+      const cityLower = city.split(',')[0].trim().toLowerCase();
+      const allNetworkAgents = await supaFetch('referral_agents?order=created_at.desc&select=*');
+      const cityNetworkAgents = (allNetworkAgents || []).filter(a =>
+        (a.city || '').toLowerCase().includes(cityLower) ||
+        (a.state || '').toLowerCase().includes(cityLower) ||
+        (a.brokerage || '').toLowerCase().includes(cityLower)
+      );
+      // Update networkAgents cache
+      if (allNetworkAgents) networkAgents = allNetworkAgents;
+      const savedPlaceIds = new Set((allNetworkAgents||[]).map(a => a.google_place_id).filter(Boolean));
+      const savedNames = new Set((allNetworkAgents||[]).map(a => (a.name||'').toLowerCase()));
+      // Convert city network agents to card-compatible format
+      const networkCards = cityNetworkAgents.map(a => ({
+        place_id: a.google_place_id || ('network-' + a.id),
+        name: a.name,
+        formatted_address: [a.brokerage, a.city, a.state].filter(Boolean).join(', '),
+        formatted_phone_number: a.phone,
+        _isNetwork: true,
+        _networkData: a
+      }));
+      // Remove Google results that are already in network (avoid duplicates)
+      const filteredGoogle = results.filter(r =>
+        !savedPlaceIds.has(r.place_id) && !savedNames.has((r.name||'').toLowerCase())
+      );
+      // Network agents first, then Google results
+      results = [...networkCards, ...filteredGoogle];
       document.getElementById('referralResultsHeader').style.display = 'flex';
       document.getElementById('referralResultsTitle').textContent = 'Agents in ' + city;
       document.getElementById('referralResultsCount').textContent = results.length + ' found';
@@ -1187,12 +1198,13 @@ async function searchAgents() {
         const inNetwork = savedPlaceIds.has(place.place_id) || savedNames.has((place.name||'').toLowerCase());
         const av = agentInitials(place.name || '?');
         const rating = place.rating ? ('&#x2B50; ' + place.rating + ' (' + (place.user_ratings_total||0) + ')') : '';
-        return '<div class="agent-card' + (inNetwork ? ' in-network' : '') + '" id="acard-' + i + '" onclick="expandAgentCard(' + i + ')">' +
+        const forceNetwork = !!place._isNetwork;
+        return '<div class="agent-card' + (inNetwork||forceNetwork ? ' in-network' : '') + '" id="acard-' + i + '" onclick="expandAgentCard(' + i + ')">' +
           '<div class="agent-top">' +
-          '<div class="agent-avatar' + (inNetwork ? ' green' : '') + '">' + av + '</div>' +
+          '<div class="agent-avatar' + (inNetwork||forceNetwork ? ' green' : '') + '">' + av + '</div>' +
           '<div><div class="agent-name">' + esc(place.name) + '</div>' +
           '<div class="agent-brokerage">' + esc(place.formatted_address||'') + '</div>' +
-          (inNetwork ? '<div class="network-badge">&#x2713; In Network</div>' : '') +
+          (inNetwork||forceNetwork ? '<div class="network-badge">&#x2713; In Network</div>' : '') +
           '</div></div>' +
           (rating ? '<div class="agent-detail">' + rating + '</div>' : '') +
           '<div class="agent-vote-preview" id="avpreview-' + i + '"><span style="font-size:11px;color:#bbb;font-style:italic;">Loading...</span></div>' +
@@ -1225,6 +1237,16 @@ function expandAgentCard(idx) {
     card.classList.add('expanded');
     card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     const expEl = document.getElementById('aexpanded-' + idx);
+    // If this is a network-only card (no Google place_id), show from stored data
+    if (place._isNetwork && place._networkData) {
+      const a = place._networkData;
+      const agentId = a.google_place_id || a.id;
+      window['_ap_' + idx] = { name: a.name, formatted_phone_number: a.phone, website: a.website, formatted_address: [a.brokerage, a.city, a.state].filter(Boolean).join(', ') };
+      window['_aid_' + idx] = agentId;
+      expEl.innerHTML = buildAgentExpandHTML(idx, window['_ap_' + idx], agentId, true);
+      setTimeout(() => loadAgentVotes(agentId, idx, false), 150);
+      return;
+    }
     expEl.innerHTML = '<div style="padding:1rem 0;color:#bbb;font-size:13px;">Loading details...</div>';
     const service = new google.maps.places.PlacesService(document.createElement('div'));
     service.getDetails({
