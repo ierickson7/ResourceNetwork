@@ -341,6 +341,12 @@
       </div>
       <div class="form-row"><label class="field-label">Website</label><input type="url" id="ag-website" /></div>
       <div class="form-row"><label class="field-label">Specialty / Notes</label><textarea id="ag-notes" style="height:70px;resize:vertical;"></textarea></div>
+      <div class="form-row">
+        <label class="field-label">Your Name *</label>
+        <select id="ag-addedby">
+          <option value="">— select your name —</option>
+        </select>
+      </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('addAgentModal')">Cancel</button>
         <button class="btn btn-primary" onclick="saveAgentToNetwork()">Add to Network</button>
@@ -541,7 +547,7 @@ function goHome() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function openAddAgentManual() {
+async function openAddAgentManual() {
   document.getElementById('ag-name').value = '';
   document.getElementById('ag-brokerage').value = '';
   document.getElementById('ag-city').value = '';
@@ -551,6 +557,18 @@ function openAddAgentManual() {
   document.getElementById('ag-website').value = '';
   document.getElementById('ag-notes').value = '';
   document.getElementById('addAgentModal')._placeId = '';
+  // Load broker names
+  const sel = document.getElementById('ag-addedby');
+  sel.innerHTML = '<option value="">— select your name —</option>';
+  const brokers = await supaFetch('brokers?active=eq.true&order=name.asc&select=name');
+  if (brokers && brokers.length) {
+    brokers.forEach(b => { sel.appendChild(new Option(b.name, b.name)); });
+  }
+  const saved = localStorage.getItem('ern_reviewer_name');
+  if (saved) {
+    const match = Array.from(sel.options).find(o => o.value === saved);
+    if (match) sel.value = saved;
+  }
   document.getElementById('addAgentModal').classList.add('open');
 }
 
@@ -1262,7 +1280,7 @@ function openAddFromCard(idx) {
   document.getElementById('addAgentModal').classList.add('open');
 }
 
-function populateAddAgentModal(p, placeId) {
+async function populateAddAgentModal(p, placeId) {
   document.getElementById('ag-name').value = p.name || '';
   document.getElementById('ag-brokerage').value = p.vicinity || p.formatted_address || '';
   const cityInput = document.getElementById('agentCityInput').value.trim();
@@ -1273,12 +1291,37 @@ function populateAddAgentModal(p, placeId) {
   document.getElementById('ag-website').value = p.website || '';
   document.getElementById('ag-notes').value = '';
   document.getElementById('addAgentModal')._placeId = placeId || p.place_id || '';
+  // Load broker names into the Added By dropdown
+  const sel = document.getElementById('ag-addedby');
+  sel.innerHTML = '<option value="">— select your name —</option>';
+  const brokers = await supaFetch('brokers?active=eq.true&order=name.asc&select=name');
+  if (brokers && brokers.length) {
+    brokers.forEach(b => {
+      const opt = new Option(b.name, b.name);
+      sel.appendChild(opt);
+    });
+  }
+  // Pre-fill from localStorage
+  const saved = localStorage.getItem('ern_reviewer_name');
+  if (saved) {
+    const match = Array.from(sel.options).find(o => o.value === saved);
+    if (match) sel.value = saved;
+  }
 }
 
 async function saveAgentToNetwork() {
   const name = document.getElementById('ag-name').value.trim();
   const city = document.getElementById('ag-city').value.trim();
+  const addedBy = document.getElementById('ag-addedby').value;
   if (!name || !city) { alert('Name and city are required.'); return; }
+  if (!addedBy) {
+    const sel = document.getElementById('ag-addedby');
+    sel.style.borderColor = '#FD5247';
+    setTimeout(() => { sel.style.borderColor = ''; }, 2500);
+    sel.focus();
+    return;
+  }
+  localStorage.setItem('ern_reviewer_name', addedBy);
   const btn = event.target;
   btn.disabled = true;
   btn.textContent = 'Saving...';
@@ -1293,7 +1336,7 @@ async function saveAgentToNetwork() {
       website: document.getElementById('ag-website').value.trim() || null,
       notes: document.getElementById('ag-notes').value.trim() || null,
       google_place_id: document.getElementById('addAgentModal')._placeId || null,
-      added_by: localStorage.getItem('ern_reviewer_name') || null
+      added_by: addedBy
     }),
     headers: { 'Prefer': 'return=minimal' }
   });
