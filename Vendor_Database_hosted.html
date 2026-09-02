@@ -699,6 +699,11 @@ async function load() {
       vendors = [...SEED_VENDORS, ...newVendors];
     }
   } catch(e) { console.warn('Could not load vendors from Supabase:', e); }
+  // Pre-load network agents in background so search highlighting works immediately
+  try {
+    const agents = await supaFetch('referral_agents?order=created_at.desc&select=*');
+    if (agents) networkAgents = agents;
+  } catch(e) {}
   buildTabs();
   // Don't render vendors on load — homepage shows only search + category grid
 }
@@ -1039,7 +1044,7 @@ function deleteFromCard(id) {
   deleteCurrent();
 }
 
-async function editCurrent() {
+function editCurrent() {
   const v = vendors.find(x => x.id === currentId);
   if (!v) return;
   closeModal('viewModal');
@@ -1054,8 +1059,6 @@ async function editCurrent() {
   document.getElementById('f-cat').value = v.category||'';
   document.getElementById('f-notes').value = v.notes||'';
   document.getElementById('f-website').value = v.website||'';
-  await loadBrokers();
-  document.getElementById('f-addedby').value = v.added_by||'';
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -1144,6 +1147,14 @@ async function searchAgents() {
       const saved = await supaFetch('referral_agents?select=google_place_id,id,name');
       const savedPlaceIds = new Set((saved||[]).map(a => a.google_place_id).filter(Boolean));
       const savedNames = new Set((saved||[]).map(a => (a.name||'').toLowerCase()));
+      // Sort: network agents first, then the rest
+      results.sort((a, b) => {
+        const aIn = savedPlaceIds.has(a.place_id) || savedNames.has((a.name||'').toLowerCase());
+        const bIn = savedPlaceIds.has(b.place_id) || savedNames.has((b.name||'').toLowerCase());
+        if (aIn && !bIn) return -1;
+        if (!aIn && bIn) return 1;
+        return 0;
+      });
       document.getElementById('referralResultsHeader').style.display = 'flex';
       document.getElementById('referralResultsTitle').textContent = 'Agents in ' + city;
       document.getElementById('referralResultsCount').textContent = results.length + ' found';
